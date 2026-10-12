@@ -4,6 +4,10 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Fixed
+
+- Reuse an already prepared local gallery figure during `publish.mjs --submit` rather than silently deleting its folder; refuse mismatched or incomplete metadata unless `--force` was explicitly requested.
+
 ## [1.1.0] - 2026-10-12
 
 ### Added
