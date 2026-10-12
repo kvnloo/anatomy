@@ -1,4 +1,5 @@
 import { chromePort } from "./chrome-port.mjs";
+import { chromeSandboxArgs } from "./chrome-sandbox.mjs";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
@@ -117,7 +118,7 @@ async function main() {
     process.exit(1);
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-drive-"));
-  const chrome = spawn(binary, ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
+  const chrome = spawn(binary, ["--headless=new", ...chromeSandboxArgs(), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
   const port = await chromePort(chrome, profile);
   const finish = (code) => {
     chrome.kill("SIGKILL");
