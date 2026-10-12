@@ -4,6 +4,10 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep Chromium sandboxing on for non-root Linux browser checks; use `--no-sandbox` for root or with an explicit `ANATOMY_NO_SANDBOX=1` override in restricted containers.
+
 ## [1.1.0] - 2026-10-12
 
 ### Added
