@@ -4,6 +4,10 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Fixed
+
+- Dial indicator updates screen-reader slider values on selection rather than every animation frame, and pauses its idle tour while the slider has focus.
+
 ## [1.1.0] - 2026-10-12
 
 ### Added
