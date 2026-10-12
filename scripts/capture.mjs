@@ -1,4 +1,5 @@
 import { chromePort } from "./chrome-port.mjs";
+import { chromeSandboxArgs } from "./chrome-sandbox.mjs";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
@@ -102,7 +103,7 @@ async function main() {
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-capture-"));
   const chrome = spawn(binary, [
-    "--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []),
+    "--headless=new", ...chromeSandboxArgs(),
     "--remote-debugging-port=0",
     `--user-data-dir=${profile}`,
     "--no-first-run",
