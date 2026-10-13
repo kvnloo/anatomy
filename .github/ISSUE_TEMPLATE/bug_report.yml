@@ -26,6 +26,7 @@ body:
       label: Which agent?
       options:
         - Claude Code
+        - Antigravity
         - OpenCode
         - Codex
         - Other
@@ -92,7 +93,7 @@ body:
     attributes:
       label: Environment
       description: Node.js version, operating system, Chrome version, agent version.
-      placeholder: output of `node --version` and `claude --version`, `opencode --version` or `codex --version`, your OS, your Chrome version
+      placeholder: output of `node --version` and `claude --version`, `agy --version`, `opencode --version` or `codex --version`, your OS, your Chrome version
     validations:
       required: true
   - type: textarea

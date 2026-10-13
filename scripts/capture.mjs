@@ -1,5 +1,5 @@
-import { chromePort } from "./chrome-port.mjs";
 import { chromeSandboxArgs } from "./chrome-sandbox.mjs";
+import { chromePort } from "./chrome-port.mjs";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
@@ -103,7 +103,7 @@ async function main() {
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-capture-"));
   const chrome = spawn(binary, [
-    "--headless=new", ...chromeSandboxArgs(),
+    "--headless=new", ...chromeSandboxArgs(), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []),
     "--remote-debugging-port=0",
     `--user-data-dir=${profile}`,
     "--no-first-run",
@@ -128,8 +128,10 @@ async function main() {
     let id = 0;
     const pending = new Map();
     const problems = [];
+    let loaded = () => {};
     socket.onmessage = (message) => {
       const data = JSON.parse(message.data);
+      if (data.method === "Page.loadEventFired") loaded();
       if (data.id && pending.has(data.id)) {
         pending.get(data.id)(data);
         pending.delete(data.id);
@@ -142,9 +144,16 @@ async function main() {
     };
     await new Promise((done) => (socket.onopen = done));
     const send = (method, params = {}) =>
-      new Promise((done) => {
+      new Promise((done, fail) => {
         const call = ++id;
-        pending.set(call, done);
+        const timer = setTimeout(() => {
+          pending.delete(call);
+          fail(new Error(`Chrome did not answer ${method} within 60 s`));
+        }, 60000);
+        pending.set(call, (data) => {
+          clearTimeout(timer);
+          done(data);
+        });
         socket.send(JSON.stringify({ id: call, method, params }));
       });
     const evaluate = async (expression) => (await send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true })).result?.result?.value;
@@ -156,9 +165,14 @@ async function main() {
     if (options.theme) features.push({ name: "prefers-color-scheme", value: options.theme });
     if (features.length) await send("Emulation.setEmulatedMedia", { features });
     await send("Emulation.setDeviceMetricsOverride", { width: options.width, height: options.height, deviceScaleFactor: options.scale, mobile: options.width < 600 });
+    const load = new Promise((done) => {
+      loaded = done;
+      setTimeout(done, 10000);
+    });
     const navigation = await send("Page.navigate", { url });
     if (navigation.error) throw new Error(`Navigation failed: ${navigation.error.message}`);
     if (navigation.result?.errorText) throw new Error(`Navigation failed: ${navigation.result.errorText}`);
+    await load;
     await sleep(Math.min(options.wait, 1500));
     await evaluate(`(async()=>{const h=document.documentElement.scrollHeight;for(let y=0;y<h;y+=400){scrollTo(0,y);await new Promise(r=>setTimeout(r,60))}scrollTo(0,0)})()`);
     await sleep(Math.max(0, options.wait - 1500));
@@ -206,6 +220,7 @@ async function main() {
       const [zx, zy, zw, zh] = options.zoom;
       return { clip: { x: box.x + zx, y: box.y + zy, width: zw, height: zh }, scale: options.zoomScale / options.scale };
     };
+    box = await boxOf();
     const first = clipOf();
     await shoot(out, first.clip, first.scale);
     const shotAt = Date.now();
@@ -213,6 +228,7 @@ async function main() {
     const readouts = [];
     for (const delay of [...options.times].sort((a, b) => a - b)) {
       await sleep(Math.max(0, shotAt + delay - Date.now()));
+      box = await boxOf();
       const next = clipOf();
       await shoot(out.replace(/\.png$/, `-${delay}.png`), next.clip, next.scale);
       readouts.push(`+${delay}ms "${await readoutOf()}"`);

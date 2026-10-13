@@ -74,7 +74,7 @@ test("--submit: people who can push get a branch; everyone else a fork made for 
   assert.deepEqual(owner.steps.at(-1).pr, { repo: "wheresryan22/anatomy-community", head: "figure/token-bucket", title: "Add Token bucket" });
   const guest = submitPlan({ login: "Octo-Cat", canPush: false, upstream: "wheresryan22/anatomy-community", author: "Octo-Cat", id: "token-bucket", title: "Token bucket" });
   assert.equal(guest.target, "Octo-Cat/anatomy-community");
-  assert.deepEqual(guest.steps[0].gh, ["repo", "fork", "wheresryan22/anatomy-community", "--clone=false", "--remote=false"]);
+  assert.deepEqual(guest.steps[0].gh, ["repo", "fork", "wheresryan22/anatomy-community", "--clone=false"]);
   assert.equal(guest.steps.at(-1).pr.head, "Octo-Cat:figure/token-bucket");
   assert.ok(guest.steps.some((s) => s.git?.[0] === "add" && s.git.at(-1) === "figures/octo-cat/token-bucket"), "only the figure's folder is added");
 });
