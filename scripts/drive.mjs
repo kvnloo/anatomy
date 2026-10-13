@@ -117,7 +117,7 @@ async function main() {
     process.exit(1);
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-drive-"));
-  const chrome = spawn(binary, ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
+  const chrome = spawn(binary, ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
   const port = await chromePort(chrome, profile);
   const finish = (code) => {
     chrome.kill("SIGKILL");
@@ -236,10 +236,8 @@ async function main() {
         const limit = Date.now() + (args[1] ?? 10000);
         let ok = false;
         while (Date.now() < limit) {
-          if (await evaluate(`Boolean(${args[0]})`)) {
-            ok = true;
-            break;
-          }
+          ok = await evaluate(`Promise.race([Promise.resolve(${args[0]}).then(Boolean), new Promise((done) => setTimeout(() => done(false), ${Math.max(0, limit - Date.now())}))])`);
+          if (ok) break;
           await sleep(25);
         }
         if (!ok) throw new Error(`until: timed out waiting for ${args[0]}`);
@@ -263,14 +261,14 @@ async function main() {
       } else if (kind === "turn") {
         const [value, group] = args;
         const call = group ? `window.__isoTurn.set(${JSON.stringify({ [group]: value })})` : `window.__isoTurn.set(${typeof value === "object" ? JSON.stringify(value) : Number(value)})`;
-        await evaluate(`(()=>{if(!window.__isoTurn)return false;${call};return new Promise((done)=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))})()`);
+        await evaluate(`(()=>{if(typeof window.__isoTurn?.set!=="function")throw new Error("${kind} action requires window.__isoTurn.set");${call};return new Promise((done)=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))})()`);
       } else if (kind === "orbit") {
         const [out, from, to, step, selector, scale, region, columns] = args;
         const frames = [];
         const labels = [];
         for (let at = from; step > 0 ? at <= to + 1e-9 : at >= to - 1e-9; at += step) {
           const angle = Math.round(at * 1000) / 1000;
-          await evaluate(`(()=>{if(!window.__isoTurn)return false;window.__isoTurn.set(${angle});return new Promise((done)=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))})()`);
+          await evaluate(`(()=>{if(typeof window.__isoTurn?.set!=="function")throw new Error("${kind} action requires window.__isoTurn.set");window.__isoTurn.set(${angle});return new Promise((done)=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))})()`);
           frames.push(await capture(selector, scale ?? 0.5, region));
           labels.push(`${angle}°`);
         }
