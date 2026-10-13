@@ -35,7 +35,7 @@ for (const theme of ["", "-light"]) {
     const page = fileURLToPath(new URL(`../examples/dial-indicator/dial-indicator${theme}.html`, import.meta.url));
     const press = `(()=>{const stage=document.querySelector(".iso-stage");stage.focus();window.ariaWrites=[];new MutationObserver(records=>window.ariaWrites.push(...records.map(record=>record.attributeName))).observe(stage,{attributes:true,attributeFilter:["aria-valuenow","aria-valuetext"]});const box=stage.querySelector("svg").getBoundingClientRect();stage.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerType:"touch",pointerId:2,clientX:box.left+box.width/2,clientY:box.top+box.height/2}));return true})()`;
     const inspect = `(()=>{const stage=document.querySelector(".iso-stage");return {value:stage.getAttribute("aria-valuenow"),text:stage.getAttribute("aria-valuetext"),writes:window.ariaWrites,visual:document.querySelector("[data-readout]").textContent,touchAction:getComputedStyle(stage).touchAction}})()`;
-    const actions = [["eval", press], ["wait", 1200], ["eval", inspect], ["wait", 4200], ["eval", inspect]];
+    const actions = [["eval", press], ["until", 'document.querySelector("[data-readout]").textContent === "block 2 · reads 14.0 px"', 10000], ["eval", inspect], ["wait", 4200], ["eval", inspect]];
     const result = await execute(process.execPath, ["scripts/drive.mjs", page, JSON.stringify(actions), "--width", "390", "--reduced"], { timeout: 30000 });
     const evaluations = [...result.stdout.matchAll(/^eval: (.*)$/gm)];
     assert.equal(evaluations.length, 3, result.stdout);
