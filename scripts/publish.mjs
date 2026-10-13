@@ -314,8 +314,13 @@ async function submit(options) {
   let published;
   for (const step of plan.steps) {
     if (step.gh) run("gh", step.gh);
-    if (step.git?.[0] === "switch" && !options.force && run("git", ["diff", "--name-only", "FETCH_HEAD", "--", plan.folder])) {
-      throw new Error(`${plan.folder} has tracked local changes relative to gallery main; local files were kept (use another --id or --force only to rebuild intentionally)`);
+    if (step.git?.[0] === "switch" && !options.force) {
+      const branch = `refs/heads/${plan.branch}`;
+      const exists = run("git", ["for-each-ref", "--format=%(refname)", branch]).split("\n").includes(branch);
+      if (run("git", ["diff", "--name-only", "FETCH_HEAD", "--", plan.folder])
+        || (exists && run("git", ["diff", "--name-only", "FETCH_HEAD", branch, "--", plan.folder]))) {
+        throw new Error(`${plan.folder} has tracked local changes relative to gallery main; local files were kept (use another --id or --force only to rebuild intentionally)`);
+      }
     }
     if (step.git) run("git", step.git);
     if (step.publish) {

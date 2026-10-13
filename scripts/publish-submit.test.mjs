@@ -59,6 +59,76 @@ function fixture() {
   return { root, repo, fork, options, git, submit };
 }
 
+for (const force of [false, true]) {
+  test(`--submit ${force ? "--force replaces" : "preserves"} a committed figure on an off-checkout submission branch`, () => {
+    const f = fixture();
+    try {
+      const { dest } = publish(f.options);
+      const sentinel = "figures/octo-cat/dial-indicator/local-note.txt";
+      writeFileSync(join(f.repo, sentinel), "committed local work must not disappear without consent\n");
+      f.git("switch", "-c", "figure/dial-indicator");
+      f.git("add", "figures");
+      f.git("commit", "-m", "local work on submission branch");
+      const oldBranch = f.git("rev-parse", "refs/heads/figure/dial-indicator");
+      const oldBytes = f.git("show", `${oldBranch}:${sentinel}`);
+      f.git("switch", "main");
+      const oldHead = f.git("rev-parse", "HEAD");
+      const result = f.submit(force ? ["--force"] : []);
+      if (force) {
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        assert.equal(existsSync(join(dest, "local-note.txt")), false);
+        assert.notEqual(f.git("rev-parse", "refs/heads/figure/dial-indicator"), oldBranch);
+        assert.equal(f.git("--git-dir", f.fork, "rev-parse", "refs/heads/figure/dial-indicator"), f.git("rev-parse", "HEAD"));
+      } else {
+        assert.equal(f.git("rev-parse", "refs/heads/figure/dial-indicator"), oldBranch, "without --force the pre-existing submission branch must not be reset from another checkout");
+        assert.equal(result.status, 1, result.stdout + result.stderr);
+        assert.match(result.stderr, /local files were kept/);
+        assert.equal(f.git("branch", "--show-current"), "main");
+        assert.equal(f.git("rev-parse", "HEAD"), oldHead);
+        assert.equal(f.git("show", `refs/heads/figure/dial-indicator:${sentinel}`), oldBytes);
+        assert.equal(f.git("status", "--porcelain"), "");
+        assert.equal(f.git("--git-dir", f.fork, "for-each-ref", "refs/heads"), "");
+      }
+    } finally {
+      rmSync(f.root, { recursive: true, force: true });
+    }
+  });
+}
+
+test("--submit allows an existing submission branch with no figure differences from gallery main", () => {
+  const f = fixture();
+  try {
+    f.git("branch", "figure/dial-indicator");
+    const result = f.submit();
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(f.git("--git-dir", f.fork, "rev-parse", "refs/heads/figure/dial-indicator"), f.git("rev-parse", "HEAD"));
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+test("--submit refuses to replace a figure already on gallery main", () => {
+  const f = fixture();
+  try {
+    const { dest } = publish(f.options);
+    const sentinel = join(dest, "local-note.txt");
+    writeFileSync(sentinel, "already on gallery main\n");
+    f.git("add", "figures");
+    f.git("commit", "-m", "existing gallery figure");
+    f.git("push", join(f.root, "upstream.git"), "main");
+    const oldHead = f.git("rev-parse", "HEAD");
+    const result = f.submit();
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /already exists/);
+    assert.equal(readFileSync(sentinel, "utf8"), "already on gallery main\n");
+    assert.equal(f.git("rev-parse", "HEAD"), oldHead);
+    assert.equal(f.git("status", "--porcelain"), "");
+    assert.equal(f.git("--git-dir", f.fork, "for-each-ref", "refs/heads"), "");
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
 for (const committed of [false, true]) {
   test(`--submit --force explicitly replaces a ${committed ? "committed" : "untracked"} local figure`, () => {
     const f = fixture();
