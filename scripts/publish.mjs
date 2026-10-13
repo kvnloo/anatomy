@@ -229,6 +229,34 @@ export function publish(options) {
   return { dest, figure, skipped, linked, preview, measured };
 }
 
+export function prepareSubmitFigure(options, onMain, log = () => {}) {
+  const folder = `figures/${options.author.replace(/^@/, "").toLowerCase()}/${options.id}`;
+  const dest = join(resolve(options.into), folder);
+  if (!onMain && !options.force && existsSync(dest)) {
+    const path = join(dest, "figure.json");
+    let figure;
+    try {
+      figure = JSON.parse(readFileSync(path, "utf8"));
+    } catch {
+      throw new Error(`${folder} has no readable figure.json; keep the local folder or use --force to rebuild it`);
+    }
+    const valid = figure.id === options.id
+      && figure.author?.toLowerCase() === options.author.replace(/^@/, "").toLowerCase()
+      && figure.title === options.title.trim()
+      && figure.prompt === options.prompt.trim()
+      && figure.agent === options.agent
+      && figure.license === options.license
+      && figure.skill?.kit === fingerprintOfSkill(SKILL)
+      && Array.isArray(figure.build) && figure.build.length > 0
+      && figure.pages && Object.keys(figure.pages).length > 0
+      && existsSync(join(dest, "src", options.build));
+    if (!valid) throw new Error(`${folder} differs from this submission or is incomplete; local files were kept (use --force only to rebuild intentionally)`);
+    log(`reusing existing local ${folder} without overwriting it`);
+    return { dest, figure };
+  }
+  return publish({ ...options, log });
+}
+
 export function submitPlan({ login, canPush, upstream, author, id, title }) {
   const name = upstream.split("/")[1];
   const target = canPush ? upstream : `${login}/${name}`;
@@ -286,10 +314,18 @@ async function submit(options) {
   let published;
   for (const step of plan.steps) {
     if (step.gh) run("gh", step.gh);
+    if (step.git?.[0] === "switch" && !options.force) {
+      const branch = `refs/heads/${plan.branch}`;
+      const exists = run("git", ["for-each-ref", "--format=%(refname)", branch]).split("\n").includes(branch);
+      if (run("git", ["diff", "--name-only", "FETCH_HEAD", "--", plan.folder])
+        || (exists && run("git", ["diff", "--name-only", "FETCH_HEAD", branch, "--", plan.folder]))) {
+        throw new Error(`${plan.folder} has tracked local changes relative to gallery main; local files were kept (use another --id or --force only to rebuild intentionally)`);
+      }
+    }
     if (step.git) run("git", step.git);
     if (step.publish) {
       const onMain = run("git", ["ls-tree", "--name-only", "HEAD", "--", plan.folder]) !== "";
-      published = publish({ ...options, force: options.force || !onMain, log: (line) => console.log(`  ${line}`) });
+      published = prepareSubmitFigure(options, onMain, (line) => console.log(`  ${line}`));
     }
     if (step.pr) {
       const open = gh(["pr", "list", "--repo", step.pr.repo, "--head", plan.branch, "--state", "open", "--json", "url", "--jq", ".[0].url"]).stdout.trim();

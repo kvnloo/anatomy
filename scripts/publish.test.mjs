@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
 import { fingerprintOf, fingerprintOfSkill } from "./fingerprint.mjs";
-import { publish, rewriteSkillPaths } from "./publish.mjs";
+import { publish, prepareSubmitFigure, rewriteSkillPaths } from "./publish.mjs";
 
 const SKILL = resolve(import.meta.dirname, "..");
 
@@ -51,6 +51,20 @@ test("publishing copies only the source, under the author, and it rebuilds byte 
     for (const page of ["dial-indicator.html", "dial-indicator-light.html"]) assert.ok(readFileSync(join(dest, "src", page)).equals(readFileSync(join(SKILL, "examples", "dial-indicator", page))), page);
     assert.ok(existsSync(join(repo, ".skill", "kit", "iso-kit.mjs")));
     assert.throws(() => publish({ source: join(SKILL, "examples", "dial-indicator"), into: repo, id: "dial-indicator", title: "x", prompt: "x", author: "octo-cat", agent: "Codex", license: "MIT", build: "build.mjs", tags: [], noPreview: true }), /already exists/);
+
+    const options = { source: join(SKILL, "examples", "dial-indicator"), into: repo, id: "dial-indicator", title: "Dial indicator", prompt: "/anatomy a dial indicator", author: "Octo-Cat", agent: "Codex", license: "MIT", build: "build.mjs", tags: [], noPreview: true };
+    const sentinel = join(dest, "local-note.txt");
+    writeFileSync(sentinel, "keep this edit");
+    const reused = prepareSubmitFigure(options, false);
+    assert.deepEqual(reused.figure, figure);
+    assert.equal(readFileSync(sentinel, "utf8"), "keep this edit");
+    assert.throws(() => prepareSubmitFigure({ ...options, title: "Another title" }, false), /local files were kept/);
+    assert.equal(readFileSync(sentinel, "utf8"), "keep this edit");
+    assert.throws(() => prepareSubmitFigure(options, true), /already exists/);
+    assert.equal(readFileSync(sentinel, "utf8"), "keep this edit");
+    writeFileSync(join(dest, "figure.json"), "{not json");
+    assert.throws(() => prepareSubmitFigure(options, false), /no readable figure.json/);
+    assert.equal(readFileSync(sentinel, "utf8"), "keep this edit");
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
