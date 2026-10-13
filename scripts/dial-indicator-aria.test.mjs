@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -51,12 +54,21 @@ for (const theme of ["", "-light"]) {
 }
 
 for (const theme of ["", "-light"]) {
-  test(`dial indicator ${theme || "dark"} updates accessible values on selection, not animation frames`, async () => {
+  test(`dial indicator ${theme || "dark"} updates accessible values on selection, not animation frames`, async (t) => {
+    const directory = mkdtempSync(join(tmpdir(), "dial-aria-"));
+    t.after(() => rmSync(directory, { recursive: true, force: true }));
+    const preload = join(directory, "motion.js");
+    writeFileSync(preload, `const nativeMedia = matchMedia.bind(window);
+window.matchMedia = query => {
+  const media = nativeMedia(query);
+  if (query === "(prefers-reduced-motion: reduce)") Object.defineProperty(media, "matches", { value: false });
+  return media;
+};`);
     const page = fileURLToPath(new URL(`../examples/dial-indicator/dial-indicator${theme}.html`, import.meta.url));
     const observe = `(()=>{const stage=document.querySelector(".iso-stage");window.ariaWrites=[];window.readoutWrites=0;new MutationObserver(records=>{for(const record of records)window.ariaWrites.push(record.attributeName)}).observe(stage,{attributes:true,attributeFilter:["aria-valuenow","aria-valuetext"]});new MutationObserver(()=>window.readoutWrites++).observe(document.querySelector("[data-readout]"),{childList:true});return stage.getAttribute("aria-valuetext")})()`;
     const inspect = `(()=>{const stage=document.querySelector(".iso-stage");return {value:stage.getAttribute("aria-valuenow"),text:stage.getAttribute("aria-valuetext"),writes:window.ariaWrites,visual:document.querySelector("[data-readout]").textContent,readoutWrites:window.readoutWrites}})()`;
     const actions = [["eval", observe], ["key", "ArrowLeft", ".iso-stage"], ["wait", 600], ["eval", inspect], ["wait", 4200], ["eval", inspect]];
-    const result = await execute(process.execPath, ["scripts/drive.mjs", page, JSON.stringify(actions)], { timeout: 30000 });
+    const result = await execute(process.execPath, ["scripts/drive.mjs", page, JSON.stringify(actions), "--preload", preload], { timeout: 30000 });
     const evaluations = [...result.stdout.matchAll(/^eval: (.*)$/gm)];
     assert.equal(evaluations.length, 3, result.stdout);
     const observed = JSON.parse(evaluations[1][1]);
