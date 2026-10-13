@@ -84,7 +84,7 @@ jobs:
       - name: Verify sandbox default and launch a real figure
         run: |
           test "$(id -u)" -ne 0
-          node --test scripts/chrome-sandbox.test.mjs
+          node --test scripts/chrome-sandbox.test.mjs scripts/chrome-launch-policy.test.mjs
           node scripts/drive.mjs examples/dial-indicator/dial-indicator-light.html '[["eval","Boolean(document.querySelector(\".iso-stage\"))"]]' --reduced --no-webgl | tee linux-browser-smoke.log
           grep -q 'eval: true' linux-browser-smoke.log
           grep -q 'console: clean' linux-browser-smoke.log
