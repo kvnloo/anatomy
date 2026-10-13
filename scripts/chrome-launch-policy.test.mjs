@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import test from "node:test";
 
 for (const name of ["capture", "drive", "turn-check"]) {
@@ -17,6 +18,8 @@ for (const name of ["capture", "drive", "turn-check"]) {
         import childProcess from "node:child_process";
         import { rmSync } from "node:fs";
         import { syncBuiltinESMExports } from "node:module";
+        import os from "node:os";
+        os.tmpdir = () => ${JSON.stringify(tmpdir())};
         Object.defineProperty(process, "platform", { value: ${JSON.stringify(platform)} });
         process.getuid = () => ${uid};
         process.env.ANATOMY_NO_SANDBOX = ${JSON.stringify(override)};
@@ -32,7 +35,10 @@ for (const name of ["capture", "drive", "turn-check"]) {
         syncBuiltinESMExports();
         await import(${JSON.stringify(entry)});
       `;
-      const result = spawnSync(process.execPath, ["--input-type=module", "--eval", bootstrap], { encoding: "utf8", timeout: 15000 });
+      const env = { ...process.env };
+      delete env.TEMP;
+      delete env.TMP;
+      const result = spawnSync(process.execPath, ["--input-type=module", "--eval", bootstrap], { encoding: "utf8", timeout: 15000, env });
       assert.equal(result.status, 0, result.stderr);
       const { binary, args } = JSON.parse(result.stdout);
       assert.equal(binary, process.execPath);
