@@ -228,12 +228,16 @@ function tick(now) {
   const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
   last = now;
   const calm = still.matches;
+  if (calm) touring = false;
   if (touring) { clock += dt; target = tourAt(clock); }
   x = calm ? target : x + (target - x) * (1 - Math.exp(-dt / 0.28));
   if (Math.abs(target - x) < 0.01) x = target;
   const want = heightUnder(x);
-  const stiff = 420, drag = calm ? 2 * Math.sqrt(420) : 26;
-  for (let i = 0; i < 4; i++) { tip.rate += ((want - tip.at) * stiff - tip.rate * drag) * dt / 4; tip.at += tip.rate * dt / 4; }
+  if (calm) { tip.at = want; tip.rate = 0; }
+  else {
+    const stiff = 420, drag = 26;
+    for (let i = 0; i < 4; i++) { tip.rate += ((want - tip.at) * stiff - tip.rate * drag) * dt / 4; tip.at += tip.rate * dt / 4; }
+  }
   if (Math.abs(want - tip.at) < 0.005 && Math.abs(tip.rate) < 0.005) { tip.at = want; tip.rate = 0; }
   draw();
   const settled = !touring && x === target && tip.rate === 0 && tip.at === want;
