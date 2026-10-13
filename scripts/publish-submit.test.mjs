@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { publish } from "./publish.mjs";
 
@@ -32,7 +33,7 @@ function fixture() {
   const options = { source: join(SKILL, "examples", "dial-indicator"), into: repo, id: "dial-indicator", title: "Dial indicator", prompt: "/anatomy a dial indicator", author: "Octo-Cat", agent: "Codex", license: "MIT", build: "build.mjs", tags: [], noPreview: true, noSession: true };
   const entry = new URL("./publish.mjs", import.meta.url);
   const submit = (extra = []) => {
-    const argv = [entry.pathname, options.source, "--into", repo, "--id", options.id, "--title", options.title, "--prompt", options.prompt, "--author", options.author, "--agent", options.agent, "--no-preview", "--no-session", "--submit", "--yes", ...extra];
+    const argv = [fileURLToPath(entry), options.source, "--into", repo, "--id", options.id, "--title", options.title, "--prompt", options.prompt, "--author", options.author, "--agent", options.agent, "--no-preview", "--no-session", "--submit", "--yes", ...extra];
     const bootstrap = `
       import childProcess from "node:child_process";
       import { syncBuiltinESMExports } from "node:module";
