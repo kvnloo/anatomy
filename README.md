@@ -100,13 +100,15 @@ Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SK
 | | Command | Installs to |
 |---|---|---|
 | **skills CLI**, for you (Claude Code) | `npx skills add wheresryan22/anatomy -g -a claude-code` | `~/.claude/skills/anatomy` |
+| **skills CLI**, for you (Antigravity) | `npx skills add wheresryan22/anatomy -g -a antigravity` | `~/.gemini/antigravity/skills/anatomy` |
 | **skills CLI**, for you (OpenCode) | `npx skills add wheresryan22/anatomy -g -a opencode` | `~/.config/opencode/skills/anatomy` |
 | **skills CLI**, for you (Codex) | `npx skills add wheresryan22/anatomy -g -a codex` | `~/.agents/skills/anatomy` |
-| **skills CLI**, for one project | `npx skills add wheresryan22/anatomy` | `.claude/skills/anatomy` for Claude Code, `.agents/skills/anatomy` for OpenCode and Codex |
+| **skills CLI**, for one project | `npx skills add wheresryan22/anatomy` | `.claude/skills/anatomy` for Claude Code, `.agents/skills/anatomy` for Antigravity, OpenCode and Codex |
 | **git**, for you (Claude Code) | `git clone https://github.com/wheresryan22/anatomy.git ~/.claude/skills/anatomy` | `~/.claude/skills/anatomy` |
+| **git**, for you (Antigravity) | `git clone https://github.com/wheresryan22/anatomy.git ~/.gemini/antigravity/skills/anatomy` | `~/.gemini/antigravity/skills/anatomy` |
 | **git**, for you (OpenCode) | `git clone https://github.com/wheresryan22/anatomy.git ~/.config/opencode/skills/anatomy` | `~/.config/opencode/skills/anatomy` |
 | **git**, for you (Codex) | `git clone https://github.com/wheresryan22/anatomy.git ~/.agents/skills/anatomy` | `~/.agents/skills/anatomy` |
-| **git**, for one project | `git clone https://github.com/wheresryan22/anatomy.git .claude/skills/anatomy` | `.claude/skills/anatomy` (Claude Code and OpenCode) or `.agents/skills/anatomy` (OpenCode and Codex) |
+| **git**, for one project | `git clone https://github.com/wheresryan22/anatomy.git .claude/skills/anatomy` | `.claude/skills/anatomy` (Claude Code and OpenCode) or `.agents/skills/anatomy` (Antigravity, OpenCode and Codex) |
 | **Download**, no git | see below | any of the folders above |
 
 <details>
@@ -114,7 +116,7 @@ Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SK
 
 <br>
 
-The [`skills`](https://github.com/vercel-labs/skills) CLI finds the `SKILL.md` at the root of this repository and installs it as `anatomy`. By default it installs into the current project and asks which agents to set up. `-g` installs it for your user, and `-a claude-code` sets up Claude Code only. Use `-a opencode` or `-a codex` for OpenCode or Codex only.
+The [`skills`](https://github.com/vercel-labs/skills) CLI finds the `SKILL.md` at the root of this repository and installs it as `anatomy`. By default it installs into the current project and asks which agents to set up. `-g` installs it for your user, and `-a claude-code` sets up Claude Code only. Use `-a antigravity`, `-a opencode` or `-a codex` for Antigravity, OpenCode or Codex only.
 
 The CLI copies the whole repository, examples included (about 10 MB). It needs a recent Node.js: version 1.7.1 of the CLI asks for 22.20 or later.
 
@@ -125,7 +127,7 @@ The CLI copies the whole repository, examples included (about 10 MB). It needs a
 
 <br>
 
-Clone the repository into one of the skill folders, so that `SKILL.md` ends up at `<skills folder>/anatomy/SKILL.md`. For Claude Code use `~/.claude/skills/anatomy` or `.claude/skills/anatomy`. For OpenCode use `~/.config/opencode/skills/anatomy` or `.opencode/skills/anatomy`; OpenCode also reads the Claude Code and `.agents` folders. For Codex use `~/.agents/skills/anatomy` or `.agents/skills/anatomy`. For a project install, commit the folder so your team gets it too. To update later, `git pull` inside that folder.
+Clone the repository into one of the skill folders, so that `SKILL.md` ends up at `<skills folder>/anatomy/SKILL.md`. For Claude Code use `~/.claude/skills/anatomy` or `.claude/skills/anatomy`. For Antigravity use `~/.gemini/antigravity/skills/anatomy` or `.agents/skills/anatomy`. For OpenCode use `~/.config/opencode/skills/anatomy` or `.opencode/skills/anatomy`; OpenCode also reads the Claude Code and `.agents` folders. For Codex use `~/.agents/skills/anatomy` or `.agents/skills/anatomy`. For a project install, commit the folder so your team gets it too. To update later, `git pull` inside that folder.
 
 </details>
 
@@ -134,7 +136,7 @@ Clone the repository into one of the skill folders, so that `SKILL.md` ends up a
 
 <br>
 
-[Download the ZIP](https://github.com/wheresryan22/anatomy/archive/refs/heads/main.zip), unpack it, rename the folder from `anatomy-main` to `anatomy`, and move it into `~/.claude/skills/` (Claude Code), `~/.config/opencode/skills/` (OpenCode) or `~/.agents/skills/` (Codex).
+[Download the ZIP](https://github.com/wheresryan22/anatomy/archive/refs/heads/main.zip), unpack it, rename the folder from `anatomy-main` to `anatomy`, and move it into `~/.claude/skills/` (Claude Code), `~/.gemini/antigravity/skills/` (Antigravity), `~/.config/opencode/skills/` (OpenCode) or `~/.agents/skills/` (Codex).
 
 Or in one line on macOS or Linux:
 
@@ -142,7 +144,11 @@ Or in one line on macOS or Linux:
 mkdir -p ~/.claude/skills/anatomy && curl -L https://github.com/wheresryan22/anatomy/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.claude/skills/anatomy
 ```
 
-For OpenCode or Codex, put the same files in `~/.config/opencode/skills/anatomy` or `~/.agents/skills/anatomy`:
+For Antigravity, OpenCode or Codex, put the same files in `~/.gemini/antigravity/skills/anatomy`, `~/.config/opencode/skills/anatomy` or `~/.agents/skills/anatomy`:
+
+```sh
+mkdir -p ~/.gemini/antigravity/skills/anatomy && curl -L https://github.com/wheresryan22/anatomy/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.gemini/antigravity/skills/anatomy
+```
 
 ```sh
 mkdir -p ~/.config/opencode/skills/anatomy && curl -L https://github.com/wheresryan22/anatomy/archive/refs/heads/main.tar.gz | tar -xz --strip-components=1 -C ~/.config/opencode/skills/anatomy
@@ -150,7 +156,7 @@ mkdir -p ~/.config/opencode/skills/anatomy && curl -L https://github.com/wheresr
 
 </details>
 
-Claude Code picks up new skills in a running session. If the `skills` folder itself did not exist when the session started, run `/reload-skills`. OpenCode lists it as `/anatomy` in its TUI; restart OpenCode if it does not show. Codex lists it under `/skills` and runs it with `$anatomy`; restart Codex if it does not show.
+Claude Code picks up new skills in a running session. If the `skills` folder itself did not exist when the session started, run `/reload-skills`. Antigravity and OpenCode list it as `/anatomy` in their chat; restart if it does not show. Codex lists it under `/skills` and runs it with `$anatomy`; restart Codex if it does not show.
 
 <details>
 <summary><b>Codex: if the browser checks are blocked</b></summary>
@@ -186,7 +192,7 @@ Type `/anatomy` (in Codex, `$anatomy`) and say what the figure should explain:
 /anatomy explain how a token bucket rate limiter works, interactive
 ```
 
-You don't have to name the skill. Claude also loads it when you ask for an isometric illustration, an explanatory figure for docs, a blog post or a landing page, or an interactive explainer. OpenCode and Codex do the same.
+You don't have to name the skill. Claude also loads it when you ask for an isometric illustration, an explanatory figure for docs, a blog post or a landing page, or an interactive explainer. Antigravity, OpenCode and Codex do the same.
 
 <details>
 <summary><b>More prompts</b>, from the skill's <a href="evals/evals.json">evals</a></summary>
@@ -286,7 +292,7 @@ anatomy/
 
 | | Needed for | Notes |
 |---|---|---|
-| **[Claude Code](https://code.claude.com/docs/en/overview)**, or [OpenCode](https://opencode.ai/docs/skills/) or [Codex](https://developers.openai.com/codex/skills) | everything | The skill is written for Claude Code and follows the open Agent Skills format, so OpenCode and Codex load it too. In Codex, the browser checks start Chrome; if its sandbox blocks that, allow it for those commands. |
+| **[Claude Code](https://code.claude.com/docs/en/overview)**, or [Antigravity](https://antigravity.google), [OpenCode](https://opencode.ai/docs/skills/) or [Codex](https://developers.openai.com/codex/skills) | everything | The skill is written for Claude Code and follows the open Agent Skills format, so Antigravity, OpenCode and Codex load it too. In Codex, the browser checks start Chrome; if its sandbox blocks that, allow it for those commands. |
 | **Node.js 20.10+** | builds, kit, checks | Built-in modules only: nothing to `npm install`. The examples were rebuilt byte for byte on Node 20.19 and 22.11. On Node 20 the browser scripts restart themselves with `--experimental-websocket`. |
 | **Chrome or Chromium** | the checks | `capture.mjs`, `drive.mjs`, `lines.mjs` and `turn-check.mjs` look in the usual places on macOS, Linux and Windows and in Playwright's cache. Set `CHROME_PATH` for any other binary. They run it headless with WebGL on. |
 | **React 18+** | React output only | `kit/react/`, `examples/test-rig/` and `examples/spot-plate/`. |

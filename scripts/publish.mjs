@@ -263,7 +263,7 @@ export function submitPlan({ login, canPush, upstream, author, id, title }) {
   const folder = `figures/${author.toLowerCase()}/${id}`;
   const branch = `figure/${id}`;
   const steps = [
-    ...(canPush ? [] : [{ say: `make (or reuse) your fork, ${target}`, gh: ["repo", "fork", upstream, "--clone=false", "--remote=false"] }]),
+    ...(canPush ? [] : [{ say: `make (or reuse) your fork, ${target}`, gh: ["repo", "fork", upstream, "--clone=false"] }]),
     { say: "let git use your GitHub CLI login", gh: ["auth", "setup-git"] },
     { say: `start ${branch} from the gallery's latest main`, git: ["fetch", "--quiet", `https://github.com/${upstream}.git`, "main"] },
     { git: ["switch", "--quiet", "-C", branch, "FETCH_HEAD"] },
