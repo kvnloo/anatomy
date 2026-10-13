@@ -129,6 +129,31 @@ test("--submit refuses to replace a figure already on gallery main", () => {
   }
 });
 
+for (const metadata of [{ build: [] }, { pages: {} }]) {
+  test(`--submit refuses empty ${Object.keys(metadata)[0]} metadata without replacing local files`, () => {
+    const f = fixture();
+    try {
+      const { dest } = publish(f.options);
+      const manifest = join(dest, "figure.json");
+      const figure = JSON.parse(readFileSync(manifest, "utf8"));
+      writeFileSync(manifest, JSON.stringify({ ...figure, ...metadata }));
+      const sentinel = join(dest, "local-note.txt");
+      writeFileSync(sentinel, "keep this incomplete local figure\n");
+      const before = readFileSync(manifest);
+      const oldHead = f.git("rev-parse", "HEAD");
+      const result = f.submit();
+      assert.equal(result.status, 1, result.stdout + result.stderr);
+      assert.match(result.stderr, /incomplete; local files were kept/);
+      assert.deepEqual(readFileSync(manifest), before);
+      assert.equal(readFileSync(sentinel, "utf8"), "keep this incomplete local figure\n");
+      assert.equal(f.git("rev-parse", "HEAD"), oldHead);
+      assert.equal(f.git("--git-dir", f.fork, "for-each-ref", "refs/heads"), "");
+    } finally {
+      rmSync(f.root, { recursive: true, force: true });
+    }
+  });
+}
+
 for (const committed of [false, true]) {
   test(`--submit --force explicitly replaces a ${committed ? "committed" : "untracked"} local figure`, () => {
     const f = fixture();

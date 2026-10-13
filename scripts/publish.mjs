@@ -247,8 +247,8 @@ export function prepareSubmitFigure(options, onMain, log = () => {}) {
       && figure.agent === options.agent
       && figure.license === options.license
       && figure.skill?.kit === fingerprintOfSkill(SKILL)
-      && Array.isArray(figure.build)
-      && figure.pages
+      && Array.isArray(figure.build) && figure.build.length > 0
+      && figure.pages && Object.keys(figure.pages).length > 0
       && existsSync(join(dest, "src", options.build));
     if (!valid) throw new Error(`${folder} differs from this submission or is incomplete; local files were kept (use --force only to rebuild intentionally)`);
     log(`reusing existing local ${folder} without overwriting it`);
