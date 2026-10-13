@@ -10,6 +10,7 @@ You need:
 
 - **Node.js 20.10 or later.** Nothing to install: the kit, the build scripts and the checks use only Node's built-in modules.
 - **Google Chrome or Chromium** for the browser checks. The scripts find it in the usual places; otherwise set `CHROME_PATH` to the binary.
+  On Linux, non-root browser checks keep Chrome's sandbox enabled. A root process needs `--no-sandbox` to launch Chromium; in a restricted non-root container where sandbox startup is unavailable, set `ANATOMY_NO_SANDBOX=1` only for trusted content.
 - **Claude Code**, Antigravity, OpenCode or Codex, to try the skill itself.
 
 ```sh
