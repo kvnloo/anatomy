@@ -14,6 +14,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ### Fixed
 
+- Dial indicator jumps its plunger and needle to the selected height in the first reduced-motion frame, without a spring animation or idle tour.
 - `capture.mjs` waits for the page to load before it touches it, even with `--wait 0`, and gives up with an error when Chrome leaves a request unanswered for 60 s instead of hanging.
 - `drive.mjs` `until` times a condition inside the page, so one that is already true passes however short the wait, even on a slow machine; a promise that never settles still times out.
 - Start headless Chrome on Windows from an elevated terminal: `capture.mjs`, `drive.mjs` and `turn-check.mjs` pass `--do-not-de-elevate` there. Chrome otherwise relaunches itself without the elevation, the process the script started exits with code 0, and the check stops with `Chrome exited before startup: 0` while the relaunched browser stays running.
