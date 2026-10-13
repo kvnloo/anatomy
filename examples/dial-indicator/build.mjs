@@ -215,8 +215,14 @@ function draw() {
   const index = blockUnder(x);
   const text = (index < 0 ? "between blocks" : "block " + (index + 1)) + " · reads " + (tip.at - BASE).toFixed(1) + " px";
   if (readout.textContent !== text) readout.textContent = text;
-  stage.setAttribute("aria-valuenow", String(Math.round(tip.at - BASE)));
-  stage.setAttribute("aria-valuetext", text);
+}
+function describe() {
+  const index = blockUnder(target);
+  const height = heightUnder(target) - BASE;
+  const text = (index < 0 ? "between blocks" : "block " + (index + 1) + " selected") + " · target height " + height.toFixed(1) + " px";
+  const now = String(Math.round(height));
+  if (stage.getAttribute("aria-valuenow") !== now) stage.setAttribute("aria-valuenow", now);
+  if (stage.getAttribute("aria-valuetext") !== text) stage.setAttribute("aria-valuetext", text);
 }
 function tick(now) {
   const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
@@ -234,27 +240,33 @@ function tick(now) {
   frame = visible && !settled ? requestAnimationFrame(tick) : 0;
 }
 const run = () => { if (!frame && visible) { last = 0; frame = requestAnimationFrame(tick); } };
-const steer = (next) => { touring = false; target = clamp(next, REACH[0], REACH[1]); clearTimeout(idleTimer); idleTimer = setTimeout(() => { touring = !still.matches; clock = 0; run(); }, 3600); run(); };
+const resumeTour = () => { touring = !still.matches && document.activeElement !== stage; clock = 0; run(); };
+const steer = (next) => { touring = false; target = clamp(next, REACH[0], REACH[1]); describe(); clearTimeout(idleTimer); idleTimer = setTimeout(resumeTour, 3600); run(); };
 new IntersectionObserver((entries) => { visible = entries[entries.length - 1].isIntersecting; if (visible) run(); }, { rootMargin: "120px 0px" }).observe(stage);
 if (still.matches) touring = false;
-stage.addEventListener("pointermove", (event) => {
+stage.addEventListener("focus", () => { touring = false; clearTimeout(idleTimer); describe(); });
+stage.addEventListener("blur", () => { clearTimeout(idleTimer); idleTimer = setTimeout(resumeTour, 3600); });
+const steerAt = (event) => {
   const box = svg.getBoundingClientRect();
   const share = clamp(((event.clientX - box.left) / box.width - 0.25) / 0.5, 0, 1);
   steer(REACH[0] + share * (REACH[1] - REACH[0]));
-});
+};
+stage.addEventListener("pointermove", steerAt);
+stage.addEventListener("pointerdown", steerAt);
 stage.addEventListener("pointerleave", () => steer(target));
 stage.addEventListener("keydown", (event) => {
   const here = stops.reduce((best, stop, index) => (Math.abs(stop - target) < Math.abs(stops[best] - target) ? index : best), 0);
   let to = null;
   if (event.key === "ArrowRight" || event.key === "ArrowUp") to = Math.max(0, here - 1);
   if (event.key === "ArrowLeft" || event.key === "ArrowDown") to = Math.min(stops.length - 1, here + 1);
-  if (event.key === "Home") to = 0;
-  if (event.key === "End") to = stops.length - 1;
+  if (event.key === "Home") to = stops.length - 1;
+  if (event.key === "End") to = 0;
   if (to === null) return;
   event.preventDefault();
   steer(stops[to]);
 });
 draw();
+describe();
 `;
 
 const body = k.plateHtml({
@@ -268,7 +280,7 @@ const body = k.plateHtml({
   ],
   caption:
     "A dial indicator on a surface plate. Slide the carriage and the plunger rides up or down onto the block beneath it; one turn of the needle is 20 px of travel, so every block reads its own height.",
-  body: `<div class="iso-stage" tabindex="0" role="slider" aria-label="Dial indicator: arrow keys move the carriage from block to block" aria-valuemin="0" aria-valuemax="18" aria-valuenow="18">${svg}</div>`,
+  body: `<div class="iso-stage" style="touch-action:pan-y" tabindex="0" role="slider" aria-label="Dial indicator: arrow keys move the carriage from block to block" aria-valuemin="${Math.min(...BLOCKS)}" aria-valuemax="${Math.max(...BLOCKS)}" aria-valuenow="18">${svg}</div>`,
 });
 
 writeFileSync(join(HERE, theme === "light" ? "dial-indicator-light.html" : "dial-indicator.html"), k.pageHtml({ title: "Dial indicator", theme, body, script: kitScript() + live }));
