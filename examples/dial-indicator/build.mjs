@@ -246,19 +246,21 @@ new IntersectionObserver((entries) => { visible = entries[entries.length - 1].is
 if (still.matches) touring = false;
 stage.addEventListener("focus", () => { touring = false; clearTimeout(idleTimer); describe(); });
 stage.addEventListener("blur", () => { clearTimeout(idleTimer); idleTimer = setTimeout(resumeTour, 3600); });
-stage.addEventListener("pointermove", (event) => {
+const steerAt = (event) => {
   const box = svg.getBoundingClientRect();
   const share = clamp(((event.clientX - box.left) / box.width - 0.25) / 0.5, 0, 1);
   steer(REACH[0] + share * (REACH[1] - REACH[0]));
-});
+};
+stage.addEventListener("pointermove", steerAt);
+stage.addEventListener("pointerdown", steerAt);
 stage.addEventListener("pointerleave", () => steer(target));
 stage.addEventListener("keydown", (event) => {
   const here = stops.reduce((best, stop, index) => (Math.abs(stop - target) < Math.abs(stops[best] - target) ? index : best), 0);
   let to = null;
   if (event.key === "ArrowRight" || event.key === "ArrowUp") to = Math.max(0, here - 1);
   if (event.key === "ArrowLeft" || event.key === "ArrowDown") to = Math.min(stops.length - 1, here + 1);
-  if (event.key === "Home") to = 0;
-  if (event.key === "End") to = stops.length - 1;
+  if (event.key === "Home") to = stops.length - 1;
+  if (event.key === "End") to = 0;
   if (to === null) return;
   event.preventDefault();
   steer(stops[to]);
@@ -278,7 +280,7 @@ const body = k.plateHtml({
   ],
   caption:
     "A dial indicator on a surface plate. Slide the carriage and the plunger rides up or down onto the block beneath it; one turn of the needle is 20 px of travel, so every block reads its own height.",
-  body: `<div class="iso-stage" tabindex="0" role="slider" aria-label="Dial indicator: arrow keys move the carriage from block to block" aria-valuemin="0" aria-valuemax="18" aria-valuenow="18">${svg}</div>`,
+  body: `<div class="iso-stage" style="touch-action:pan-y" tabindex="0" role="slider" aria-label="Dial indicator: arrow keys move the carriage from block to block" aria-valuemin="${Math.min(...BLOCKS)}" aria-valuemax="${Math.max(...BLOCKS)}" aria-valuenow="18">${svg}</div>`,
 });
 
 writeFileSync(join(HERE, theme === "light" ? "dial-indicator-light.html" : "dial-indicator.html"), k.pageHtml({ title: "Dial indicator", theme, body, script: kitScript() + live }));

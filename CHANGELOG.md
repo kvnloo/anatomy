@@ -22,7 +22,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 - Await asynchronous `until` conditions without treating the promise itself as success, while enforcing the wait deadline.
 - Capture measures the current figure before every screenshot, including moved, resized and timed zoom crops.
 - `publish.mjs --submit` makes the fork again with gh 2.101 and later, which refuse `--remote` when a repository is named; gh never adds a remote in that case, so the flag is gone (#53).
-- Dial indicator updates screen-reader slider values on selection rather than every animation frame, and pauses its idle tour while the slider has focus.
+- Dial indicator updates screen-reader slider values on selection rather than every animation frame, pauses its idle tour while the slider has focus, and selects on touch press without blocking vertical scrolling. Home and End select the lowest and highest block heights, matching the accessible range.
 
 ## [1.1.0] - 2026-10-12
 
